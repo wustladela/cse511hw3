@@ -38,15 +38,27 @@ class ValueIterationAgent(ValueEstimationAgent):
     "*** YOUR CODE HERE ***"
     self.states = self.mdp.getStates()
     startState = self.mdp.getStartState()
-    print "self.states:"
-    print self.states
-    print "startState:"
-    print startState
+    possibleActions = self.mdp.getPossibleActions(startState)
+    test1 = self.mdp.getTransitionStatesAndProbs(startState, possibleActions[0])
+    """
+      self.states:
+      ['TERMINAL_STATE', (0, 0), (0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1), (2, 2), (3, 0), (3, 1), (3, 2)]
+      startState:
+      (0, 0)
+      possibleActions:
+      ('north', 'west', 'south', 'east')
+      getTransitionStatesAndProbs:  //for start state using possibleActions[0]:
+      [((0, 1), 0.8), ((1, 0), 0.1), ((0, 0), 0.1)]
+      self.values: a dictionary with all the states --> values
+    """
+
+
     
   def getValue(self, state):
     """
       Return the value of the state (computed in __init__).
     """
+
     return self.values[state]
 
 
@@ -79,6 +91,7 @@ class ValueIterationAgent(ValueEstimationAgent):
     action = self.mdp.getPossibleActions(state)
     print "action 76:"
     print action
+    return action
     util.raiseNotDefined()
 
   def getAction(self, state):
