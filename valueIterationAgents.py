@@ -31,15 +31,6 @@ class ValueIterationAgent(ValueEstimationAgent):
           mdp.getTransitionStatesAndProbs(state, action)
           mdp.getReward(state, action, nextState)
     """
-    self.mdp = mdp
-    self.discount = discount
-    self.iterations = iterations
-    self.values = util.Counter() # A Counter is a dict with default 0
-    "*** YOUR CODE HERE ***"
-    self.states = self.mdp.getStates()
-    startState = self.mdp.getStartState()
-    possibleActions = self.mdp.getPossibleActions(startState)
-    test1 = self.mdp.getTransitionStatesAndProbs(startState, possibleActions[0])
     """
       self.states:
       ['TERMINAL_STATE', (0, 0), (0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1), (2, 2), (3, 0), (3, 1), (3, 2)]
@@ -49,11 +40,77 @@ class ValueIterationAgent(ValueEstimationAgent):
       ('north', 'west', 'south', 'east')
       getTransitionStatesAndProbs:  //for start state using possibleActions[0]:
       [((0, 1), 0.8), ((1, 0), 0.1), ((0, 0), 0.1)]
-      self.values: a dictionary with all the states --> values
+      self.values: a dictionary with all the states and values
     """
-
-
+    self.mdp = mdp
+    self.discount = discount
+    self.iterations = iterations
+    self.values = util.Counter() # A Counter is a dict with default 0
+    "*** YOUR CODE HERE ***"
+    # self.states = self.mdp.getStates()
+    # startState = self.mdp.getStartState()
+    # possibleActions = self.mdp.getPossibleActions(startState)
+    # probs = self.mdp.getTransitionStatesAndProbs(startState, possibleActions[0])
     
+    # currState = startState
+    # for action in possibleActions:
+    #   transition = self.mdp.getTransitionStatesAndProbs(currState, action)
+    #   print "transition:"
+    #   print transition
+    #   nextState = transition[0][0]
+    #   print "nextState:"
+    #   print nextState
+      # prob = transition[1]
+      # r = self.mdp.getReward(currState, action, nextState)
+
+    """
+    pseudo code
+    Vk = .... Vk-1
+    current time step is from the last one lookahead
+    OH!
+    SO WHEN There is only one second, it gets rewards right now (exit reward or living cost)
+    when there are two seconds, then add all the nextState values computed from last time
+    backwards recursive.
+    now HOW DO I DO THIS RECURSIVELY???---
+    ok try doing it iteratively
+
+    now write a for loop manually first to test
+    when there's only one second in the world aka 
+    k = 1:
+    terminal reward or living cost
+    k = 2:
+    s's reward + sPrime's discounted value from previous calculation
+    and weighed into probs
+    k = 3:
+    s's reward + sPrime's value, if exist in dictionary --- actually count() solves the problem
+    etc.
+
+    """
+    allStates = self.mdp.getStates()
+    currentState = self.mdp.getStartState()
+    allActions = self.mdp.getPossibleActions(currentState)
+    k = 0
+    # while k<self.iterations: TODO
+    #   k = k + 1 #number of steps available in this world
+      #for each action, we have probs of entering different states and getting different rewards
+      #so we need to get all that
+    chooseAction = []
+    for action in allActions:
+      transition = self.mdp.getTransitionStatesAndProbs(currentState, action)
+      for each in transition:
+        nextState = each[0]
+        prob = each[1]
+        currentReward = self.mdp.getReward(currentState, action, nextState)
+        discountedFuture = self.values[nextState]*self.discount
+        result = prob*(currentReward+discountedFuture)
+        item = (action, result)
+        chooseAction.append(item)
+
+    print "chooseAction:"
+    print chooseAction
+      #closestFood = min(foodDistance, key = lambda x: x[1])
+
+
   def getValue(self, state):
     """
       Return the value of the state (computed in __init__).
@@ -71,10 +128,6 @@ class ValueIterationAgent(ValueEstimationAgent):
       to derive it on the fly.
     """
     "*** YOUR CODE HERE ***"
-    print "getQValue() state:"
-    print state
-    print "getQValue() action:"
-    print action
     util.raiseNotDefined()
 
   def getPolicy(self, state):
@@ -86,11 +139,7 @@ class ValueIterationAgent(ValueEstimationAgent):
       terminal state, you should return None.
     """
     "*** YOUR CODE HERE ***"
-    print "getPolicy(): state:"
-    print state
     action = self.mdp.getPossibleActions(state)
-    print "action 76:"
-    print action
     return action
     util.raiseNotDefined()
 
