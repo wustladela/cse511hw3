@@ -88,28 +88,42 @@ class ValueIterationAgent(ValueEstimationAgent):
     """
     allStates = self.mdp.getStates()
     currentState = self.mdp.getStartState()
+    #TODO: currentState is ALWAYS BETWEEN 0,0 AND 0,1
+    currentStates = []
+    currentStates.append(currentState)
     allActions = self.mdp.getPossibleActions(currentState)
     k = 0
-    # while k<self.iterations: TODO
-    #   k = k + 1 #number of steps available in this world
-      #for each action, we have probs of entering different states and getting different rewards
-      #so we need to get all that
-    chooseAction = []
-    for action in allActions:
-      transition = self.mdp.getTransitionStatesAndProbs(currentState, action)
-      for each in transition:
-        nextState = each[0]
-        prob = each[1]
-        currentReward = self.mdp.getReward(currentState, action, nextState)
-        discountedFuture = self.values[nextState]*self.discount
-        result = prob*(currentReward+discountedFuture)
-        item = (action, result)
-        chooseAction.append(item)
+    while k<self.iterations:
+      k = k + 1 #number of steps available in this world. what do we do? update
+      chooseAction = util.Counter()
+      for currentState in currentStates:
+        for action in allActions:
+          transition = self.mdp.getTransitionStatesAndProbs(currentState, action)
+          for each in transition:
+            # expectimax for this action, with future discounted rewards etc
+            nextState = each[0]
+            prob = each[1]
+            currentReward = self.mdp.getReward(currentState, action, nextState)
+            discountedFuture = self.values[nextState]*self.discount
+            result = chooseAction[action]
+            result += prob*(currentReward+discountedFuture)
+            chooseAction[action] = result
+        bestAction = chooseAction.argMax()
+        bestValue = chooseAction[bestAction]
+        self.values[currentState] = bestValue
+        bestTransition = self.mdp.getTransitionStatesAndProbs(currentState, bestAction)
+        currentStates = [] 
+        currentStates = [x[0] for x in bestTransition]
+      
+      print "self.values:"
+      print self.values
+      print "k = "
+      print k
 
-    print "chooseAction:"
-    print chooseAction
-      #closestFood = min(foodDistance, key = lambda x: x[1])
-
+      # bestActionItem = max(chooseAction, key = lambda x: x[1])[0]
+      # bestAction = bestActionItem[0]
+      # bestResult = 
+      # self.values[currentState] = 
 
   def getValue(self, state):
     """
