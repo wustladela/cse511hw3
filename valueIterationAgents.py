@@ -46,90 +46,103 @@ class ValueIterationAgent(ValueEstimationAgent):
     self.discount = discount
     self.iterations = iterations
     self.values = util.Counter() # A Counter is a dict with default 0
+    self.actions = util.Counter()
+    self.newValues = util.Counter()
     "*** YOUR CODE HERE ***"
-    # self.states = self.mdp.getStates()
-    # startState = self.mdp.getStartState()
-    # possibleActions = self.mdp.getPossibleActions(startState)
-    # probs = self.mdp.getTransitionStatesAndProbs(startState, possibleActions[0])
-    
-    # currState = startState
-    # for action in possibleActions:
-    #   transition = self.mdp.getTransitionStatesAndProbs(currState, action)
-    #   print "transition:"
-    #   print transition
-    #   nextState = transition[0][0]
-    #   print "nextState:"
-    #   print nextState
-      # prob = transition[1]
-      # r = self.mdp.getReward(currState, action, nextState)
-
+  
+    # allStates = self.mdp.getStates()
+    # currentState = self.mdp.getStartState()
+    # #TODO: currentState is ALWAYS BETWEEN 0,0 AND 0,1
+    # currentStates = []
+    # currentStates.append(currentState)
+    # allActions = self.mdp.getPossibleActions(currentState)
+    # k = 0
+    # while k<self.iterations:
+    #   k = k + 1 #number of steps available in this world. what do we do? update
+    #   chooseAction = util.Counter()
+    #   for currentState in currentStates:
+    #     for action in allActions:
+    #       transition = self.mdp.getTransitionStatesAndProbs(currentState, action)
+    #       for each in transition:
+    #         # expectimax for this action, with future discounted rewards etc
+    #         nextState = each[0]
+    #         prob = each[1]
+    #         currentReward = self.mdp.getReward(currentState, action, nextState)
+    #         discountedFuture = self.values[nextState]*self.discount
+    #         result = chooseAction[action]
+    #         result += prob*(currentReward+discountedFuture)
+    #         chooseAction[action] = result
+    #     bestAction = chooseAction.argMax()
+    #     bestValue = chooseAction[bestAction]
+    #     self.values[currentState] = bestValue
+    #     bestTransition = self.mdp.getTransitionStatesAndProbs(currentState, bestAction)
+    #     currentStates = [] 
+    #     currentStates = [x[0] for x in bestTransition]
+      
+    #   print "self.values:"
+    #   print self.values
+    #   print "k = "
+    #   print k
     """
-    pseudo code
-    Vk = .... Vk-1
-    current time step is from the last one lookahead
-    OH!
-    SO WHEN There is only one second, it gets rewards right now (exit reward or living cost)
-    when there are two seconds, then add all the nextState values computed from last time
-    backwards recursive.
-    now HOW DO I DO THIS RECURSIVELY???---
-    ok try doing it iteratively
+    pseudo code:
+    p: transition function
+    r: reward
+    k: # actions available to take
+    for k = 1 to ...
+      for each state s
+        immediateReward = getReward
+        discountedFuture = ...
+        expectedValue: sum of all possible next states values * probs //nextState value = R+discountedFuture
 
-    now write a for loop manually first to test
-    when there's only one second in the world aka 
-    k = 1:
-    terminal reward or living cost
-    k = 2:
-    s's reward + sPrime's discounted value from previous calculation
-    and weighed into probs
-    k = 3:
-    s's reward + sPrime's value, if exist in dictionary --- actually count() solves the problem
-    etc.
+        and finally, we select the action with the best result.
+    
+    so---new pseudo code------
+    for k = 1 to ...:
+      for each state s: 
+        for action in allActions:
+          for eachOutcome in transition:
+            immediateReward = ...
+            discountedFuture = ...
+            nextState value = immediateReward + discountedFuture
+            result = probs * nextState value
+        find the best action according to chooseAction
+        return that one.
 
+        use the batch version: each vk is computed from a fixed v(k-1) not updated at all
+        use 
+        ---
+    collect policy according to value/action later.  
     """
     allStates = self.mdp.getStates()
-    currentState = self.mdp.getStartState()
-    #TODO: currentState is ALWAYS BETWEEN 0,0 AND 0,1
-    currentStates = []
-    currentStates.append(currentState)
-    allActions = self.mdp.getPossibleActions(currentState)
     k = 0
-    while k<self.iterations:
-      k = k + 1 #number of steps available in this world. what do we do? update
-      chooseAction = util.Counter()
-      for currentState in currentStates:
+    while k<=self.iterations:
+      self.values = self.newValues.copy()
+      for state in allStates:
+        chooseAction = util.Counter()
+        allActions = self.mdp.getPossibleActions(state)
         for action in allActions:
-          transition = self.mdp.getTransitionStatesAndProbs(currentState, action)
-          for each in transition:
-            # expectimax for this action, with future discounted rewards etc
-            nextState = each[0]
-            prob = each[1]
-            currentReward = self.mdp.getReward(currentState, action, nextState)
+          transition = self.mdp.getTransitionStatesAndProbs(state, action)#       for each in transition:
+          for eachOutcome in transition:
+            nextState = eachOutcome[0]
+            prob = eachOutcome[1]
+            immediateReward = self.mdp.getReward(state, action, nextState)
             discountedFuture = self.values[nextState]*self.discount
-            result = chooseAction[action]
-            result += prob*(currentReward+discountedFuture)
+            #add the value of nextState to our bookkeeping for this state
+            result = chooseAction[action] #retrieve old value or 0.
+            result += prob*(immediateReward+discountedFuture)
             chooseAction[action] = result
+
         bestAction = chooseAction.argMax()
         bestValue = chooseAction[bestAction]
-        self.values[currentState] = bestValue
-        bestTransition = self.mdp.getTransitionStatesAndProbs(currentState, bestAction)
-        currentStates = [] 
-        currentStates = [x[0] for x in bestTransition]
-      
-      print "self.values:"
-      print self.values
-      print "k = "
-      print k
+        self.newValues[state] = bestValue
+        self.actions[state] = bestAction
+      k = k + 1
 
-      # bestActionItem = max(chooseAction, key = lambda x: x[1])[0]
-      # bestAction = bestActionItem[0]
-      # bestResult = 
-      # self.values[currentState] = 
 
   def getValue(self, state):
     """
       Return the value of the state (computed in __init__).
     """
-
     return self.values[state]
 
 
@@ -142,6 +155,10 @@ class ValueIterationAgent(ValueEstimationAgent):
       to derive it on the fly.
     """
     "*** YOUR CODE HERE ***"
+    """
+    pseudo code:
+    q value = 
+    """
     util.raiseNotDefined()
 
   def getPolicy(self, state):
@@ -153,8 +170,7 @@ class ValueIterationAgent(ValueEstimationAgent):
       terminal state, you should return None.
     """
     "*** YOUR CODE HERE ***"
-    action = self.mdp.getPossibleActions(state)
-    return action
+    return self.actions[state]
     util.raiseNotDefined()
 
   def getAction(self, state):
