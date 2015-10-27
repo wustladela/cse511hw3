@@ -76,7 +76,7 @@ class QLearningAgent(ReinforcementAgent):
     ---but we don't need to do much in init
     """
     self.qvalues = util.Counter()
-
+    self.values = util.Counter()
 
 
   def getQValue(self, state, action):
@@ -102,12 +102,13 @@ class QLearningAgent(ReinforcementAgent):
     "*** YOUR CODE HERE ***"
     legalActions = self.getLegalActions(state)
     if len(legalActions)<= 1:
-      return 0.0
+      return 0.0#?????like this?
     allQValues = []
     #get all q values in the state and return the max q value
     for action in legalActions:
       allQValues.append(self.getQValue(state, action))
     highest = max(allQValues)#sort the list and get the max value and return the best state-action pair
+    self.values[state] = highest
     return highest
     util.raiseNotDefined()
 
@@ -174,15 +175,23 @@ class QLearningAgent(ReinforcementAgent):
     currentItem = (state, action)
     nextItem = (nextState, nextAction)
     nextQ = self.getValue(nextState)
+    # how do we detect next state to be terminal state???TODO HERE!!!!!
+    if len(self.getLegalActions(nextState))<=1:
+
+      self.values[state] = reward
+      nextQ = self.values[nextState]
+
     currentQ = self.getQValue(state, action)
-    print "nextQ:"
-    print nextQ
-    print "currentQ:"
-    print currentQ
     sample = reward + (self.discount*nextQ)
     ans = (1-self.alpha)*currentQ+self.alpha*sample
+    print "nextQ:"
+    print nextQ
     print "ans:"
     print ans
+    print "# actions:"
+    print self.getLegalActions(nextState)
+    # ==
+
     self.qvalues[currentItem] = ans
 
 
