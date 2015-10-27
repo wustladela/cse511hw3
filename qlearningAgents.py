@@ -32,12 +32,52 @@ class QLearningAgent(ReinforcementAgent):
       - self.getLegalActions(state)
         which returns legal actions
         for a state
+
+    iteration is the same
+    q learning: update as you go (in-place)
+    Bellman eq: the same, just 
+
+    --
+    recall from the Bellman equation that the Value of a state is the maximum Q-value and the Q-value is the expected sum of the reward and discounted value of the next state
+
+    In the Q-learning update rule, the reward plus the discounted max Q-value in the observed next state
+     each time the agent selects an action, and observes a reward and a new state that may depend on both the previous state and the selected action, "Q" is updated. The core of the algorithm is a simple value iteration update. It assumes the old value and makes a correction based on the new information.
+
   """
   def __init__(self, **args):
     "You can initialize Q-values here..."
     ReinforcementAgent.__init__(self, **args)
 
     "*** YOUR CODE HERE ***"
+    """
+    pseudo code:
+    allowed function: self.getLegalActions(state)
+    create a counter for (state, action), value
+      the key of counter is state action pair.
+    if there is nothing learned, then it's 0.0
+    every time new state gets reward, ???
+    for k = 1 to ...:
+      for each state s: 
+        for action in allActions:
+          for eachOutcome in transition:
+            immediateReward = ...
+            discountedFuture = ...
+            nextState value = immediateReward + discountedFuture
+            result = probs * nextState value
+        find the best action according to chooseAction
+        return that one.
+
+        use the batch version: each vk is computed from a fixed v(k-1) not updated at all
+        use 
+        ---
+    collect policy according to value/action later.  
+    """
+    """
+    ---but we don't need to do much in init
+    """
+    self.qvalues = util.Counter()
+
+
 
   def getQValue(self, state, action):
     """
@@ -46,6 +86,9 @@ class QLearningAgent(ReinforcementAgent):
       a state or (state,action) tuple
     """
     "*** YOUR CODE HERE ***"
+    # print "entering getQValue"
+    item = (state, action)
+    return self.qvalues[item]
     util.raiseNotDefined()
 
 
@@ -57,6 +100,15 @@ class QLearningAgent(ReinforcementAgent):
       terminal state, you should return a value of 0.0.
     """
     "*** YOUR CODE HERE ***"
+    legalActions = self.getLegalActions(state)
+    if len(legalActions)<= 1:
+      return 0.0
+    allQValues = []
+    #get all q values in the state and return the max q value
+    for action in legalActions:
+      allQValues.append(self.getQValue(state, action))
+    highest = max(allQValues)#sort the list and get the max value and return the best state-action pair
+    return highest
     util.raiseNotDefined()
 
   def getPolicy(self, state):
@@ -66,6 +118,15 @@ class QLearningAgent(ReinforcementAgent):
       you should return None.
     """
     "*** YOUR CODE HERE ***"
+    legalActions = self.getLegalActions(state)
+    if len(legalActions)== 1:
+      return None
+    #get all actions from available actions and choose the one with highest q value
+    allQValues = util.Counter() #for this state only
+    for action in legalActions:
+      allQValues[action] = self.getQValue(state, action)
+    bestAction = allQValues.argMax()
+    return bestAction
     util.raiseNotDefined()
 
   def getAction(self, state):
@@ -83,9 +144,15 @@ class QLearningAgent(ReinforcementAgent):
     legalActions = self.getLegalActions(state)
     action = None
     "*** YOUR CODE HERE ***"
+    if len(legalActions)== 1:
+      return action
+    self.epsilon = self.epsilon*100
+    randomInt = randint(0,100)
+    if randint<=self.epsilon:
+      return random.choice(legalActions)
+    else:
+      return self.getPolicy(state)
     util.raiseNotDefined()
-
-    return action
 
   def update(self, state, action, nextState, reward):
     """
@@ -95,9 +162,31 @@ class QLearningAgent(ReinforcementAgent):
 
       NOTE: You should never call this function,
       it will be called on your behalf
+      Instance variables you have access to
+      - self.epsilon (exploration prob)
+      - self.alpha (learning rate)
+      - self.discount (discount rate)
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    print "current reward---:"
+    print reward
+    nextAction = self.getPolicy(nextState)#assuming best action
+    currentItem = (state, action)
+    nextItem = (nextState, nextAction)
+    nextQ = self.getValue(nextState)
+    currentQ = self.getQValue(state, action)
+    print "nextQ:"
+    print nextQ
+    print "currentQ:"
+    print currentQ
+    sample = reward + (self.discount*nextQ)
+    ans = (1-self.alpha)*currentQ+self.alpha*sample
+    print "ans:"
+    print ans
+    self.qvalues[currentItem] = ans
+
+
+    #util.raiseNotDefined()
 
 class PacmanQAgent(QLearningAgent):
   "Exactly the same as QLearningAgent, but with different default parameters"
