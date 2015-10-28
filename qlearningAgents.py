@@ -185,11 +185,9 @@ class QLearningAgent(ReinforcementAgent):
     currentItem = (state, action)
     nextItem = (nextState, nextAction)
     nextQ = self.getValue(nextState)
-    # how do we detect next state to be terminal state???TODO HERE!!!!!
-    if len(self.getLegalActions(nextState))<=1:
-
+    if len(self.getLegalActions(nextState))==1:
       self.values[state] = reward
-      nextQ = self.values[nextState]
+      #nextQ = self.values[nextState]
 
     currentQ = self.getQValue(state, action)
     sample = reward + (self.discount*nextQ)
