@@ -101,15 +101,15 @@ class QLearningAgent(ReinforcementAgent):
     """
     "*** YOUR CODE HERE ***"
     legalActions = self.getLegalActions(state)
-    if len(legalActions)<= 1:
-      return 0.0#?????like this?
+    if len(legalActions)< 1:#terminal state
+      return 0.0
     allQValues = []
     #get all q values in the state and return the max q value
     for action in legalActions:
       allQValues.append(self.getQValue(state, action))
     highest = max(allQValues)#sort the list and get the max value and return the best state-action pair
     self.values[state] = highest
-    return highest
+    return self.values[state]
     util.raiseNotDefined()
 
   def getPolicy(self, state):
@@ -120,13 +120,19 @@ class QLearningAgent(ReinforcementAgent):
     """
     "*** YOUR CODE HERE ***"
     legalActions = self.getLegalActions(state)
-    if len(legalActions)== 1:
+    if len(legalActions)< 1:
       return None
     #get all actions from available actions and choose the one with highest q value
     allQValues = util.Counter() #for this state only
+    unknown = True
     for action in legalActions:
       allQValues[action] = self.getQValue(state, action)
-    bestAction = allQValues.argMax()
+      if allQValues[action]!=0:
+        unknown = False
+    if unknown:
+      bestAction = random.choice(legalActions)
+    else: 
+      bestAction = allQValues.argMax()
     return bestAction
     util.raiseNotDefined()
 
@@ -145,14 +151,20 @@ class QLearningAgent(ReinforcementAgent):
     legalActions = self.getLegalActions(state)
     action = None
     "*** YOUR CODE HERE ***"
-    if len(legalActions)== 1:
+    if len(legalActions) < 1:
       return action
-    self.epsilon = self.epsilon*100
-    randomInt = randint(0,100)
-    if randint<=self.epsilon:
+    chooseRandom = flipCoin(self.epsilon)
+    if chooseRandom:
       return random.choice(legalActions)
     else:
       return self.getPolicy(state)
+
+    # self.epsilon = self.epsilon*100
+    # randomInt = randint(0,100)
+    # if randint<=self.epsilon:
+    #   return random.choice(legalActions)
+    # else:
+    #   return self.getPolicy(state)
     util.raiseNotDefined()
 
   def update(self, state, action, nextState, reward):
@@ -169,8 +181,6 @@ class QLearningAgent(ReinforcementAgent):
       - self.discount (discount rate)
     """
     "*** YOUR CODE HERE ***"
-    print "current reward---:"
-    print reward
     nextAction = self.getPolicy(nextState)#assuming best action
     currentItem = (state, action)
     nextItem = (nextState, nextAction)
@@ -184,17 +194,7 @@ class QLearningAgent(ReinforcementAgent):
     currentQ = self.getQValue(state, action)
     sample = reward + (self.discount*nextQ)
     ans = (1-self.alpha)*currentQ+self.alpha*sample
-    print "nextQ:"
-    print nextQ
-    print "ans:"
-    print ans
-    print "# actions:"
-    print self.getLegalActions(nextState)
-    # ==
-
     self.qvalues[currentItem] = ans
-
-
     #util.raiseNotDefined()
 
 class PacmanQAgent(QLearningAgent):
